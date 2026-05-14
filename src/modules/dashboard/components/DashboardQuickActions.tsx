@@ -67,8 +67,8 @@ function buildActions(
 
   if (hasProgramConfigRoute) {
     adminActions.push({
-      label: "Program Settings",
-      description: "Adjust loyalty program settings and controls.",
+      label: "Programs",
+      description: "Manage program availability and core settings.",
       path: "/program-config",
     });
   }
@@ -84,26 +84,36 @@ export function DashboardQuickActions({
 
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-        Quick Actions
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+          Quick Actions
+        </h2>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          Shortcuts for daily operations
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {actions.map((action) => (
-          <SurfaceCard key={action.label} className="p-0">
+          <SurfaceCard key={action.label} className="group relative overflow-hidden p-0">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent dark:via-slate-700/80" />
             <Link
               to={action.path}
-              className="block rounded-2xl px-4 py-4 transition hover:bg-slate-50/80 dark:hover:bg-slate-900/75"
+              className="block rounded-2xl px-4 py-3.5 transition hover:bg-slate-50/80 dark:hover:bg-slate-900/75"
             >
-              <p className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-                {action.label}
-              </p>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {action.description}
-              </p>
-              <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                Open
-              </p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+                    {action.label}
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    {action.description}
+                  </p>
+                </div>
+                <span className="mt-0.5 inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-slate-200 bg-white/80 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition group-hover:border-slate-300 group-hover:text-slate-800 dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-300 dark:group-hover:border-slate-600 dark:group-hover:text-slate-100">
+                  Go
+                </span>
+              </div>
             </Link>
           </SurfaceCard>
         ))}

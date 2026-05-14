@@ -17,7 +17,7 @@ export function TopRedeemedRewardsReportTable({
             Top Redeemed Rewards
           </h2>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            Rewards with the highest redemption volume.
+            Rewards with the highest redemption volume in the selected program.
           </p>
         </div>
       </div>

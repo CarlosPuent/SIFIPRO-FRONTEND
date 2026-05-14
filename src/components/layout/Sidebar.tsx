@@ -21,10 +21,10 @@ export function Sidebar() {
             SIFIPRO
           </p>
           <h2 className="mt-1 text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-            Loyalty Admin
+            Tenant Admin
           </h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Multi-tenant workspace
+            Multi-tenant operations
           </p>
         </div>
 

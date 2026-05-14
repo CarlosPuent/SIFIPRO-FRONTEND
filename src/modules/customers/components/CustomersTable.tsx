@@ -23,9 +23,14 @@ export function CustomersTable({
   return (
     <SurfaceCard className="overflow-hidden p-0">
       <div className="flex items-center justify-between border-b border-slate-200/80 px-5 py-4 dark:border-slate-800/80">
-        <h2 className="text-sm font-semibold tracking-wide text-slate-800 dark:text-slate-100">
-          Customers
-        </h2>
+        <div>
+          <h2 className="text-sm font-semibold tracking-wide text-slate-800 dark:text-slate-100">
+            Customers
+          </h2>
+          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+            Tenant customer records and current balance visibility.
+          </p>
+        </div>
         <span className="text-xs text-slate-500 dark:text-slate-400">
           Total: {customers.length}
         </span>

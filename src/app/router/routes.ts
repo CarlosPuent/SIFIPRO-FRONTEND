@@ -4,12 +4,12 @@ export const appNavigation: NavigationItem[] = [
   {
     label: 'Dashboard',
     path: '/dashboard',
-    description: 'Overview of SIFIPRO performance and activity.',
+    description: 'Overview of tenant and program performance.',
   },
   {
     label: 'Customers',
     path: '/customers',
-    description: 'Manage customer records and segmentation data.',
+    description: 'Manage tenant customer records and account status.',
   },
   {
     label: 'Rewards',
@@ -24,17 +24,17 @@ export const appNavigation: NavigationItem[] = [
   {
     label: 'Redemptions',
     path: '/redemptions',
-    description: 'Track and validate reward redemptions by selected program.',
+    description: 'Track and validate reward redemptions by the selected program.',
   },
   {
     label: 'Reports',
     path: '/reports',
-    description: 'Access analytics and summaries filtered by current program.',
+    description: 'Access tenant and selected-program reporting summaries.',
   },
   {
     label: 'Users',
     path: '/users',
-    description: 'Admin-only management of internal platform users.',
+    description: 'Admin-only management of internal tenant users.',
     roles: ['ADMIN'],
   },
   {

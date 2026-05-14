@@ -7,11 +7,12 @@ type MetricCardProps = {
 
 export function MetricCard({ label, value }: MetricCardProps) {
   return (
-    <SurfaceCard className="p-4 sm:p-5">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    <SurfaceCard className="relative overflow-hidden p-4 sm:p-5">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent dark:via-slate-700/80" />
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
         {label}
       </p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+      <p className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-slate-900 dark:text-slate-50 sm:text-[2rem]">
         {value}
       </p>
     </SurfaceCard>

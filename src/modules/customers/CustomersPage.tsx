@@ -71,7 +71,7 @@ function CustomersEmptyState() {
         No customers yet
       </h2>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-        Create your first customer to begin tracking loyalty activity.
+        Create your first customer to begin managing tenant customer records.
       </p>
     </SurfaceCard>
   );
@@ -237,7 +237,7 @@ export function CustomersPage() {
           Customers
         </h1>
         <p className="max-w-3xl text-sm text-slate-600 dark:text-slate-300 sm:text-base">
-          Manage customer profiles, account status, and points visibility in one
+          Manage tenant-scoped customer profiles and account status in one
           structured workspace.
         </p>
       </header>
@@ -252,7 +252,8 @@ export function CustomersPage() {
             Customer Management
           </h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Create, edit, and control customer account status.
+            Create, edit, and control customer accounts for the authenticated
+            tenant.
           </p>
         </div>
 
@@ -263,6 +264,14 @@ export function CustomersPage() {
         >
           New Customer
         </button>
+      </SurfaceCard>
+
+      <SurfaceCard className="p-4 sm:p-5">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Points Balance is shown as returned by the customer endpoint for the
+          tenant customer record. It is not switched by the current program in
+          this module.
+        </p>
       </SurfaceCard>
 
       {customers.length === 0 ? (

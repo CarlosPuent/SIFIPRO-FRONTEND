@@ -75,7 +75,8 @@ function UsersEmptyState() {
         No internal users yet
       </h2>
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-        Create your first user account to delegate admin and staff operations.
+        Create your first user account for this tenant to delegate admin and
+        staff operations.
       </p>
     </SurfaceCard>
   );
@@ -295,7 +296,8 @@ export function UsersPage() {
           Users
         </h1>
         <p className="max-w-3xl text-sm text-slate-600 dark:text-slate-300 sm:text-base">
-          Admin-only management of internal user accounts and access roles.
+          Admin-only management of tenant-scoped internal user accounts and
+          access roles.
         </p>
       </header>
 
@@ -309,7 +311,8 @@ export function UsersPage() {
             User Management
           </h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Create, edit, activate, and deactivate internal users.
+            Create, edit, activate, and deactivate internal users for the
+            authenticated tenant.
           </p>
         </div>
 
@@ -320,6 +323,13 @@ export function UsersPage() {
         >
           New User
         </button>
+      </SurfaceCard>
+
+      <SurfaceCard className="p-4 sm:p-5">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          This module manages internal access for the current tenant. It is
+          admin-scoped and does not change by selected program.
+        </p>
       </SurfaceCard>
 
       {users.length === 0 ? (

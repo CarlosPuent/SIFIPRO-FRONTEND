@@ -1,18 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "../../auth/useAuth";
 import { InlineAlert } from "../../components/ui/InlineAlert";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
 import { extractErrorMessage } from "../../lib/error-utils";
 import { formatNumber } from "../../lib/formatters";
+import { useProgram } from "../program-config/ProgramContext";
 import { ReportMetricCard } from "./components/ReportMetricCard";
 import { TopCustomersReportTable } from "./components/TopCustomersReportTable";
 import { TopRedeemedRewardsReportTable } from "./components/TopRedeemedRewardsReportTable";
-import {
-  getDashboardSummary,
-  getTopCustomers,
-  getTopRedeemedRewards,
-} from "./reports.service";
+import { getReportsData } from "./reports.service";
 import type {
-  DashboardSummaryResponse,
+  ReportsScopeSummary,
   TopCustomerResponse,
   TopRedeemedRewardResponse,
 } from "./reports.types";
@@ -22,39 +20,39 @@ type FeedbackState = {
   message: string;
 } | null;
 
-function buildMetricItems(summary: DashboardSummaryResponse) {
+function buildMetricItems(summary: ReportsScopeSummary) {
   return [
     {
-      label: "Total Customers",
-      value: formatNumber(summary.totalCustomers),
+      label: "Customers in Tenant",
+      value: formatNumber(summary.tenantCustomers),
     },
     {
-      label: "Active Customers",
-      value: formatNumber(summary.totalActiveCustomers),
+      label: "Active Customers in Tenant",
+      value: formatNumber(summary.tenantActiveCustomers),
     },
     {
-      label: "Total Rewards",
-      value: formatNumber(summary.totalRewards),
+      label: "Rewards in Program",
+      value: formatNumber(summary.programRewards),
     },
     {
-      label: "Active Rewards",
-      value: formatNumber(summary.totalActiveRewards),
+      label: "Active Rewards in Program",
+      value: formatNumber(summary.programActiveRewards),
     },
     {
-      label: "Total Transactions",
-      value: formatNumber(summary.totalTransactions),
+      label: "Transactions in Program",
+      value: formatNumber(summary.programTransactions),
     },
     {
-      label: "Total Redemptions",
-      value: formatNumber(summary.totalRedemptions),
+      label: "Redemptions in Program",
+      value: formatNumber(summary.programRedemptions),
     },
     {
-      label: "Total Points Issued",
-      value: formatNumber(summary.totalPointsIssued),
+      label: "Points Issued in Program",
+      value: formatNumber(summary.totalPointsIssuedInProgram),
     },
     {
-      label: "Total Points Redeemed",
-      value: formatNumber(summary.totalPointsRedeemed),
+      label: "Points Redeemed in Program",
+      value: formatNumber(summary.totalPointsRedeemedInProgram),
     },
   ];
 }
@@ -111,8 +109,40 @@ function ReportsErrorState({ message, onRetry }: ReportsErrorStateProps) {
   );
 }
 
+type ReportsProgramSelectionStateProps = {
+  isLoadingPrograms: boolean;
+  programsError: string | null;
+};
+
+function ReportsProgramSelectionState({
+  isLoadingPrograms,
+  programsError,
+}: ReportsProgramSelectionStateProps) {
+  return (
+    <SurfaceCard className="p-8">
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        {isLoadingPrograms ? "Loading programs" : "No program selected"}
+      </h2>
+      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+        {isLoadingPrograms
+          ? "Please wait while we resolve available programs for this tenant."
+          : "Select a program from the header to load tenant and program-scoped reports."}
+      </p>
+      {programsError ? (
+        <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">
+          {programsError}
+        </p>
+      ) : null}
+    </SurfaceCard>
+  );
+}
+
 export function ReportsPage() {
-  const [summary, setSummary] = useState<DashboardSummaryResponse | null>(null);
+  const { user } = useAuth();
+  const { currentProgram, isLoadingPrograms, programsError } = useProgram();
+  const currentProgramId = currentProgram?.id ?? null;
+
+  const [summary, setSummary] = useState<ReportsScopeSummary | null>(null);
   const [topCustomers, setTopCustomers] = useState<TopCustomerResponse[]>([]);
   const [topRedeemedRewards, setTopRedeemedRewards] = useState<
     TopRedeemedRewardResponse[]
@@ -123,9 +153,22 @@ export function ReportsPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState>(null);
   const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const tenantName = user?.tenant.name ?? "Tenant unavailable";
 
   const loadReports = useCallback(
     async (options?: { showLoader?: boolean }) => {
+      if (!currentProgramId) {
+        setSummary(null);
+        setTopCustomers([]);
+        setTopRedeemedRewards([]);
+        setLoadError(null);
+        setFeedback(null);
+        setLastUpdatedAt(null);
+        setIsLoading(false);
+        setIsRefreshing(false);
+        return;
+      }
+
       const showLoader = options?.showLoader ?? false;
 
       if (showLoader) {
@@ -137,16 +180,11 @@ export function ReportsPage() {
       }
 
       try {
-        const [summaryData, topCustomersData, topRedeemedRewardsData] =
-          await Promise.all([
-            getDashboardSummary(),
-            getTopCustomers(),
-            getTopRedeemedRewards(),
-          ]);
+        const reportsData = await getReportsData(currentProgramId);
 
-        setSummary(summaryData);
-        setTopCustomers(topCustomersData);
-        setTopRedeemedRewards(topRedeemedRewardsData);
+        setSummary(reportsData.summary);
+        setTopCustomers(reportsData.topCustomers);
+        setTopRedeemedRewards(reportsData.topRedeemedRewards);
         setLastUpdatedAt(new Date());
 
         if (showLoader) {
@@ -171,7 +209,7 @@ export function ReportsPage() {
         }
       }
     },
-    [],
+    [currentProgramId],
   );
 
   useEffect(() => {
@@ -205,6 +243,52 @@ export function ReportsPage() {
     void loadReports();
   };
 
+  if (!currentProgram && !isLoading) {
+    return (
+      <section className="space-y-6">
+        <header className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+            Reports
+          </h1>
+          <p className="max-w-3xl text-sm text-slate-600 dark:text-slate-300 sm:text-base">
+            Reports depend on the authenticated tenant and the currently
+            selected program.
+          </p>
+        </header>
+
+        <SurfaceCard className="p-4 sm:p-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Tenant
+              </p>
+              <p className="mt-2 text-sm font-medium text-slate-800 dark:text-slate-100">
+                {tenantName}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Current Program
+              </p>
+              <p className="mt-2 text-sm font-medium text-slate-800 dark:text-slate-100">
+                Select a program
+              </p>
+            </div>
+          </div>
+          <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
+            Customer totals are tenant-scoped. Ranking tables and operational
+            metrics are generated for the selected program only.
+          </p>
+        </SurfaceCard>
+
+        <ReportsProgramSelectionState
+          isLoadingPrograms={isLoadingPrograms}
+          programsError={programsError}
+        />
+      </section>
+    );
+  }
+
   if (isLoading) {
     return <ReportsLoadingState />;
   }
@@ -229,8 +313,8 @@ export function ReportsPage() {
           Reports
         </h1>
         <p className="max-w-3xl text-sm text-slate-600 dark:text-slate-300 sm:text-base">
-          Formal operational reporting snapshot of customers, rewards,
-          transactions, and redemption activity.
+          Formal operational reporting snapshot for the authenticated tenant and
+          the currently selected program.
         </p>
       </header>
 
@@ -245,6 +329,9 @@ export function ReportsPage() {
           </h2>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Last updated: {lastUpdatedLabel}
+          </p>
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Tenant: {tenantName} · Program: {currentProgram?.programName}
           </p>
         </div>
 
@@ -277,6 +364,10 @@ export function ReportsPage() {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           Ranking Reports
         </h2>
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Customer ranking is based on activity within the selected program and
+          uses the tenant customer roster as reference.
+        </p>
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
           <TopCustomersReportTable customers={topCustomers} />
           <TopRedeemedRewardsReportTable rewards={topRedeemedRewards} />

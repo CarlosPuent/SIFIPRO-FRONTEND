@@ -42,9 +42,9 @@ export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
     ? "Loading programs..."
     : hasPrograms
       ? currentProgram
-        ? `Current: ${currentProgram.programName}`
+        ? `Current Program: ${currentProgram.programName}`
         : "Select a program"
-      : "No programs";
+      : "No programs available";
 
   const handleProgramChange = (value: string) => {
     const nextProgramId = Number(value);
@@ -63,7 +63,7 @@ export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
               SIFIPRO Admin
             </p>
             <h1 className="mt-1 text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-xl">
-              {activeItem?.label ?? "Workspace"}
+              {activeItem?.label ?? "SIFIPRO"}
             </h1>
             {activeItem?.description ? (
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
@@ -135,7 +135,7 @@ export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
                 <option value="">Loading programs...</option>
               ) : null}
               {!isLoadingPrograms && !hasPrograms ? (
-                <option value="">No programs</option>
+                <option value="">No programs available</option>
               ) : null}
               {!isLoadingPrograms
                 ? programs.map((program) => (

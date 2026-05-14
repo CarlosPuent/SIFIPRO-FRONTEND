@@ -260,7 +260,7 @@ export function ProgramConfigPage() {
         </h1>
         <p className="max-w-3xl text-sm text-slate-600 dark:text-slate-300 sm:text-base">
           Manage all loyalty programs for the authenticated tenant. Create,
-          edit, and toggle active status without leaving this workspace.
+          edit, and toggle active status from one place.
         </p>
         <div className="flex flex-wrap items-center gap-2 pt-1">
           <button

@@ -4,6 +4,7 @@ import { useAuth } from "../../auth/useAuth";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
 import { extractErrorMessage } from "../../lib/error-utils";
 import { formatNumber } from "../../lib/formatters";
+import { useProgram } from "../program-config/ProgramContext";
 import { DashboardQuickActions } from "./components/DashboardQuickActions";
 import { LowStockRewardsTable } from "./components/LowStockRewardsTable";
 import { MetricCard } from "./components/MetricCard";
@@ -12,23 +13,30 @@ import { RecentTransactionsTable } from "./components/RecentTransactionsTable";
 import { fetchOperationalDashboardData } from "./dashboard.service";
 import type {
   DashboardOperationalData,
-  DashboardSummaryResponse,
+  DashboardScopeSummary,
 } from "./dashboard.types";
 
-function buildMetricItems(summary: DashboardSummaryResponse) {
+function buildMetricItems(summary: DashboardScopeSummary) {
   return [
     {
-      label: "Total Customers",
-      value: formatNumber(summary.totalCustomers),
+      label: "Customers in Tenant",
+      value: formatNumber(summary.tenantCustomers),
     },
     {
-      label: "Active Customers",
-      value: formatNumber(summary.totalActiveCustomers),
+      label: "Active Customers in Tenant",
+      value: formatNumber(summary.tenantActiveCustomers),
     },
-    { label: "Total Rewards", value: formatNumber(summary.totalRewards) },
     {
-      label: "Total Redemptions",
-      value: formatNumber(summary.totalRedemptions),
+      label: "Rewards in Program",
+      value: formatNumber(summary.programRewards),
+    },
+    {
+      label: "Transactions in Program",
+      value: formatNumber(summary.programTransactions),
+    },
+    {
+      label: "Redemptions in Program",
+      value: formatNumber(summary.programRedemptions),
     },
   ];
 }
@@ -92,8 +100,38 @@ function DashboardErrorState({ message, onRetry }: DashboardErrorStateProps) {
   );
 }
 
+type DashboardProgramSelectionStateProps = {
+  isLoadingPrograms: boolean;
+  programsError: string | null;
+};
+
+function DashboardProgramSelectionState({
+  isLoadingPrograms,
+  programsError,
+}: DashboardProgramSelectionStateProps) {
+  return (
+    <SurfaceCard className="p-8">
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        {isLoadingPrograms ? "Loading programs" : "No program selected"}
+      </h2>
+      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+        {isLoadingPrograms
+          ? "Please wait while we resolve available programs for this tenant."
+          : "Select a program from the header to load program-scoped operational metrics and activity."}
+      </p>
+      {programsError ? (
+        <p className="mt-2 text-sm text-rose-600 dark:text-rose-400">
+          {programsError}
+        </p>
+      ) : null}
+    </SurfaceCard>
+  );
+}
+
 export function DashboardPage() {
   const { user } = useAuth();
+  const { currentProgram, isLoadingPrograms, programsError } = useProgram();
+  const currentProgramId = currentProgram?.id ?? null;
   const [dashboardData, setDashboardData] =
     useState<DashboardOperationalData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -105,13 +143,21 @@ export function DashboardPage() {
   );
 
   const roleTitle = user?.role === "ADMIN" ? "ADMIN" : "STAFF";
+  const tenantName = user?.tenant.name ?? "Tenant unavailable";
 
   const loadDashboard = useCallback(async () => {
+    if (!currentProgramId) {
+      setDashboardData(null);
+      setErrorMessage(null);
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     setErrorMessage(null);
 
     try {
-      const data = await fetchOperationalDashboardData();
+      const data = await fetchOperationalDashboardData(currentProgramId);
       setDashboardData(data);
     } catch (error) {
       const message = extractErrorMessage(error, "Unexpected dashboard error.");
@@ -119,7 +165,7 @@ export function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentProgramId]);
 
   useEffect(() => {
     void loadDashboard();
@@ -143,79 +189,122 @@ export function DashboardPage() {
 
   const welcomeSubtitle = useMemo(() => {
     if (roleTitle === "ADMIN") {
-      return "Command-center overview for platform management, team coordination, and operational control.";
+      return "Command-center overview for tenant operations with program-aware activity and inventory.";
     }
 
-    return "Operational workspace for customer activity, transaction processing, and redemption handling.";
+    return "Operational workspace scoped to the authenticated tenant and the currently selected program.";
   }, [roleTitle]);
-
-  if (isLoading) {
-    return <DashboardLoadingState />;
-  }
-
-  if (errorMessage) {
-    return (
-      <DashboardErrorState message={errorMessage} onRetry={loadDashboard} />
-    );
-  }
-
-  if (!dashboardData) {
-    return (
-      <DashboardErrorState
-        message="Dashboard data is unavailable."
-        onRetry={loadDashboard}
-      />
-    );
-  }
 
   return (
     <section className="space-y-6">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-          {welcomeTitle}
-        </h1>
-        <p className="max-w-3xl text-sm text-slate-600 dark:text-slate-300 sm:text-base">
-          {welcomeSubtitle}
-        </p>
-      </header>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)] xl:items-start">
+        <header className="space-y-2 rounded-2xl border border-slate-200/80 bg-white/75 px-5 py-4 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/65">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
+            Dashboard
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-[2rem]">
+            {welcomeTitle}
+          </h1>
+          <p className="max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+            {welcomeSubtitle}
+          </p>
+        </header>
 
-      <SurfaceCard className="p-4 sm:p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Operational Role
-        </p>
-        <p className="mt-2 text-sm font-medium text-slate-800 dark:text-slate-100">
-          {roleTitle}
-        </p>
-      </SurfaceCard>
+        <SurfaceCard className="p-4 sm:p-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                Tenant
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {tenantName}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                Current Program
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {currentProgram?.programName ?? "Select a program"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                Operational Role
+              </p>
+              <p className="mt-1.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {roleTitle}
+              </p>
+            </div>
+          </div>
+          <div className="mt-3 h-px bg-slate-200/80 dark:bg-slate-800/80" />
+          <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
+            Customer totals remain tenant-scoped. Rewards, transactions,
+            redemptions, and low-stock inventory are scoped to the selected
+            program.
+          </p>
+        </SurfaceCard>
+      </div>
+
+      {isLoading ? <DashboardLoadingState /> : null}
+
+      {!isLoading && !currentProgram ? (
+        <DashboardProgramSelectionState
+          isLoadingPrograms={isLoadingPrograms}
+          programsError={programsError}
+        />
+      ) : null}
+
+      {!isLoading && currentProgram && errorMessage ? (
+        <DashboardErrorState message={errorMessage} onRetry={loadDashboard} />
+      ) : null}
+
+      {!isLoading && currentProgram && !errorMessage && !dashboardData ? (
+        <DashboardErrorState
+          message="Dashboard data is unavailable."
+          onRetry={loadDashboard}
+        />
+      ) : null}
+
+      {!isLoading && currentProgram && !errorMessage && dashboardData ? (
+        <>
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
+                Operational Metrics
+              </h2>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Scoped to tenant and selected program
+              </p>
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              {metricItems.map((metric) => (
+                <MetricCard
+                  key={metric.label}
+                  label={metric.label}
+                  value={metric.value}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <RecentTransactionsTable
+              transactions={dashboardData.recentTransactions}
+            />
+            <RecentRedemptionsTable
+              redemptions={dashboardData.recentRedemptions}
+            />
+          </section>
+
+          <LowStockRewardsTable rewards={dashboardData.lowStockRewards} />
+        </>
+      ) : null}
 
       <DashboardQuickActions
         role={roleTitle}
         hasProgramConfigRoute={hasProgramConfigRoute}
       />
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          Operational Metrics
-        </h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {metricItems.map((metric) => (
-            <MetricCard
-              key={metric.label}
-              label={metric.label}
-              value={metric.value}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <RecentTransactionsTable
-          transactions={dashboardData.recentTransactions}
-        />
-        <RecentRedemptionsTable redemptions={dashboardData.recentRedemptions} />
-      </section>
-
-      <LowStockRewardsTable rewards={dashboardData.lowStockRewards} />
     </section>
   );
 }

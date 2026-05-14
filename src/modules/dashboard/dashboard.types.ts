@@ -9,6 +9,15 @@ export interface DashboardSummaryResponse {
   totalPointsRedeemed: number | string;
 }
 
+export interface DashboardScopeSummary {
+  tenantCustomers: number;
+  tenantActiveCustomers: number;
+  programRewards: number;
+  programActiveRewards: number;
+  programTransactions: number;
+  programRedemptions: number;
+}
+
 export interface TopCustomerResponse {
   customerId: number;
   customerFullName: string;
@@ -31,6 +40,8 @@ export interface DashboardData {
 
 export interface DashboardTransactionResponse {
   id: number;
+  programConfigId?: number;
+  programName?: string | null;
   customerFullName: string;
   amount: number | string;
   transactionDate: string;
@@ -40,6 +51,8 @@ export interface DashboardTransactionResponse {
 
 export interface DashboardRedemptionResponse {
   id: number;
+  programConfigId: number;
+  programName?: string | null;
   customerFullName: string;
   rewardName: string;
   redemptionDate: string;
@@ -49,6 +62,8 @@ export interface DashboardRedemptionResponse {
 
 export interface DashboardRewardResponse {
   id: number;
+  programConfigId?: number;
+  programName?: string | null;
   name: string;
   requiredPoints: number | string;
   stock: number;
@@ -56,7 +71,7 @@ export interface DashboardRewardResponse {
 }
 
 export interface DashboardOperationalData {
-  summary: DashboardSummaryResponse;
+  summary: DashboardScopeSummary;
   recentTransactions: DashboardTransactionResponse[];
   recentRedemptions: DashboardRedemptionResponse[];
   lowStockRewards: DashboardRewardResponse[];

@@ -17,7 +17,7 @@ export function TopCustomersReportTable({
             Top Customers
           </h2>
           <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            Ranked by current points balance.
+            Ranked by selected-program activity, with tenant customer details.
           </p>
         </div>
       </div>
@@ -33,6 +33,7 @@ export function TopCustomersReportTable({
               <tr>
                 <th className="px-5 py-3 font-medium">Name</th>
                 <th className="px-5 py-3 font-medium">Email</th>
+                <th className="px-5 py-3 font-medium">Activity</th>
                 <th className="px-5 py-3 font-medium">Points Balance</th>
                 <th className="px-5 py-3 font-medium">Status</th>
               </tr>
@@ -45,6 +46,10 @@ export function TopCustomersReportTable({
                   </td>
                   <td className="px-5 py-3.5 text-slate-600 dark:text-slate-300">
                     {customer.email}
+                  </td>
+                  <td className="px-5 py-3.5 text-slate-700 dark:text-slate-200">
+                    {(customer.transactionsCount ?? 0) +
+                      (customer.redemptionsCount ?? 0)}
                   </td>
                   <td className="px-5 py-3.5 text-slate-700 dark:text-slate-200">
                     {formatPoints(customer.pointsBalance)}

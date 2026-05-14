@@ -85,7 +85,7 @@ export async function updateProgramConfig(
   const currentProgram = await getProgramConfig();
 
   if (!currentProgram) {
-    throw new Error("No program config available to update.");
+    throw new Error("No program available to update.");
   }
 
   const response = await apiClient.put<ProgramConfigResponse>(
@@ -116,7 +116,7 @@ export async function deactivateProgramConfig(
   return response.data;
 }
 
-// Legacy compatibility for ProgramConfigPage until its dedicated refactor.
+// Compatibility helper for callers that still expect a single current program.
 export async function getProgramConfig(): Promise<ProgramConfigResponse | null> {
   const programs = await getProgramConfigs();
   return programs[0] ?? null;

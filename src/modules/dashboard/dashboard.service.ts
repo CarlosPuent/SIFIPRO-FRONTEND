@@ -4,6 +4,7 @@ import type {
   DashboardOperationalData,
   DashboardRedemptionResponse,
   DashboardRewardResponse,
+  DashboardScopeSummary,
   DashboardSummaryResponse,
   DashboardTransactionResponse,
   TopCustomerResponse,
@@ -21,6 +22,36 @@ function getComparableTimestamp(dateValue: string | undefined): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+type CustomerDashboardResponse = {
+  active: boolean;
+};
+
+function filterProgramRedemptions(
+  redemptions: DashboardRedemptionResponse[],
+  programConfigId: number,
+): DashboardRedemptionResponse[] {
+  return redemptions.filter(
+    (redemption) => redemption.programConfigId === programConfigId,
+  );
+}
+
+function buildDashboardSummary(
+  customers: CustomerDashboardResponse[],
+  rewards: DashboardRewardResponse[],
+  transactions: DashboardTransactionResponse[],
+  redemptions: DashboardRedemptionResponse[],
+): DashboardScopeSummary {
+  return {
+    tenantCustomers: customers.length,
+    tenantActiveCustomers: customers.filter((customer) => customer.active)
+      .length,
+    programRewards: rewards.length,
+    programActiveRewards: rewards.filter((reward) => reward.active).length,
+    programTransactions: transactions.length,
+    programRedemptions: redemptions.length,
+  };
+}
+
 export async function fetchDashboardData(): Promise<DashboardData> {
   const [summaryResponse, topCustomersResponse, topRewardsResponse] = await Promise.all([
     apiClient.get<DashboardSummaryResponse>('/api/reports/dashboard'),
@@ -35,20 +66,30 @@ export async function fetchDashboardData(): Promise<DashboardData> {
   };
 }
 
-export async function fetchOperationalDashboardData(): Promise<DashboardOperationalData> {
-  const [summaryResponse, transactionsResponse, redemptionsResponse, rewardsResponse] =
+export async function fetchOperationalDashboardData(
+  programConfigId: number,
+): Promise<DashboardOperationalData> {
+  const [customersResponse, transactionsResponse, redemptionsResponse, rewardsResponse] =
     await Promise.all([
-      apiClient.get<DashboardSummaryResponse>('/api/reports/dashboard'),
-      apiClient.get<DashboardTransactionResponse[]>('/api/transactions'),
+      apiClient.get<CustomerDashboardResponse[]>('/api/customers'),
+      apiClient.get<DashboardTransactionResponse[]>(
+        `/api/transactions/program/${programConfigId}`,
+      ),
       apiClient.get<DashboardRedemptionResponse[]>('/api/redemptions'),
-      apiClient.get<DashboardRewardResponse[]>('/api/rewards'),
+      apiClient.get<DashboardRewardResponse[]>(
+        `/api/rewards/programs/${programConfigId}`,
+      ),
     ]);
+
+  const customers = Array.isArray(customersResponse.data)
+    ? customersResponse.data
+    : [];
 
   const transactions = Array.isArray(transactionsResponse.data)
     ? transactionsResponse.data
     : [];
   const redemptions = Array.isArray(redemptionsResponse.data)
-    ? redemptionsResponse.data
+    ? filterProgramRedemptions(redemptionsResponse.data, programConfigId)
     : [];
   const rewards = Array.isArray(rewardsResponse.data) ? rewardsResponse.data : [];
 
@@ -74,7 +115,7 @@ export async function fetchOperationalDashboardData(): Promise<DashboardOperatio
     .slice(0, 5);
 
   return {
-    summary: summaryResponse.data,
+    summary: buildDashboardSummary(customers, rewards, transactions, redemptions),
     recentTransactions,
     recentRedemptions,
     lowStockRewards,

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import { InlineAlert } from "../../components/ui/InlineAlert";
+import { toast } from "sonner";
+import { Button } from "../../components/ui/Button";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
 import { extractErrorMessage } from "../../lib/error-utils";
 import { PasswordUpdateModal } from "./components/PasswordUpdateModal";
@@ -21,11 +22,6 @@ import type {
   UpdateUserRequest,
   UserResponse,
 } from "./users.types";
-
-type FeedbackState = {
-  kind: "success" | "error";
-  message: string;
-} | null;
 
 type ModalMode = "create" | "edit";
 
@@ -57,13 +53,9 @@ function UsersErrorState({ message, onRetry }: UsersErrorStateProps) {
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {message}
       </p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-5 inline-flex rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-      >
+      <Button variant="secondary" className="mt-5" onClick={onRetry}>
         Retry
-      </button>
+      </Button>
     </SurfaceCard>
   );
 }
@@ -86,8 +78,6 @@ export function UsersPage() {
   const [users, setUsers] = useState<UserResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
@@ -126,7 +116,6 @@ export function UsersPage() {
   }, [loadUsers]);
 
   const handleOpenCreate = () => {
-    setFeedback(null);
     setModalMode("create");
     setSelectedUserId(null);
     setSelectedUser(null);
@@ -135,7 +124,6 @@ export function UsersPage() {
   };
 
   const handleOpenEdit = async (userId: number) => {
-    setFeedback(null);
     setModalMode("edit");
     setSelectedUserId(userId);
     setSelectedUser(null);
@@ -147,10 +135,7 @@ export function UsersPage() {
       setSelectedUser(user);
     } catch (error) {
       setModalOpen(false);
-      setFeedback({
-        kind: "error",
-        message: `Could not load user details. ${extractErrorMessage(error)}`,
-      });
+      toast.error(`Could not load user details. ${extractErrorMessage(error)}`);
     } finally {
       setIsLoadingModalData(false);
     }
@@ -172,29 +157,20 @@ export function UsersPage() {
     try {
       if (modalMode === "create") {
         await createUser(payload as CreateUserRequest);
-        setFeedback({
-          kind: "success",
-          message: "User created successfully.",
-        });
+        toast.success("User created successfully.");
       } else {
         if (!selectedUserId) {
           throw new Error("User identifier is missing.");
         }
 
         await updateUser(selectedUserId, payload as UpdateUserRequest);
-        setFeedback({
-          kind: "success",
-          message: "User updated successfully.",
-        });
+        toast.success("User updated successfully.");
       }
 
       setModalOpen(false);
       await loadUsers();
     } catch (error) {
-      setFeedback({
-        kind: "error",
-        message: `Could not save user. ${extractErrorMessage(error)}`,
-      });
+      toast.error(`Could not save user. ${extractErrorMessage(error)}`);
     } finally {
       setIsSavingModal(false);
     }
@@ -202,36 +178,25 @@ export function UsersPage() {
 
   const handleToggleUserStatus = async (user: UserResponse) => {
     setStatusActionUserId(user.id);
-    setFeedback(null);
 
     try {
       if (user.active) {
         await deactivateUser(user.id);
-        setFeedback({
-          kind: "success",
-          message: "User deactivated successfully.",
-        });
+        toast.success("User deactivated successfully.");
       } else {
         await activateUser(user.id);
-        setFeedback({
-          kind: "success",
-          message: "User activated successfully.",
-        });
+        toast.success("User activated successfully.");
       }
 
       await loadUsers();
     } catch (error) {
-      setFeedback({
-        kind: "error",
-        message: `Could not update user status. ${extractErrorMessage(error)}`,
-      });
+      toast.error(`Could not update user status. ${extractErrorMessage(error)}`);
     } finally {
       setStatusActionUserId(null);
     }
   };
 
   const handleOpenPasswordChange = (user: UserResponse) => {
-    setFeedback(null);
     setPasswordTargetUser(user);
     setPasswordModalOpen(true);
   };
@@ -254,27 +219,17 @@ export function UsersPage() {
 
     try {
       await updateUserPassword(passwordTargetUser.id, payload);
-
-      setFeedback({
-        kind: "success",
-        message: "Password updated successfully.",
-      });
-
+      toast.success("Password updated successfully.");
       setPasswordModalOpen(false);
       setPasswordTargetUser(null);
       await loadUsers();
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
-        setFeedback({
-          kind: "error",
-          message:
-            "Password update endpoint is not available in this backend environment.",
-        });
+        toast.error(
+          "Password update endpoint is not available in this backend environment.",
+        );
       } else {
-        setFeedback({
-          kind: "error",
-          message: `Could not update password. ${extractErrorMessage(error)}`,
-        });
+        toast.error(`Could not update password. ${extractErrorMessage(error)}`);
       }
     } finally {
       setPasswordActionUserId(null);
@@ -301,10 +256,6 @@ export function UsersPage() {
         </p>
       </header>
 
-      {feedback ? (
-        <InlineAlert tone={feedback.kind} message={feedback.message} />
-      ) : null}
-
       <SurfaceCard className="flex items-center justify-between p-4 sm:p-5">
         <div>
           <h2 className="text-sm font-semibold tracking-wide text-slate-800 dark:text-slate-100">
@@ -316,20 +267,9 @@ export function UsersPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenCreate}
-          className="rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-        >
+        <Button variant="primary" onClick={handleOpenCreate}>
           New User
-        </button>
-      </SurfaceCard>
-
-      <SurfaceCard className="p-4 sm:p-5">
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          This module manages internal access for the current tenant. It is
-          admin-scoped and does not change by selected program.
-        </p>
+        </Button>
       </SurfaceCard>
 
       {users.length === 0 ? (

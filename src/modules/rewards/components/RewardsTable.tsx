@@ -1,3 +1,4 @@
+import { Button } from "../../../components/ui/Button";
 import { SurfaceCard } from "../../../components/ui/SurfaceCard";
 import { fallbackText, formatPoints } from "../../../lib/formatters";
 import type { RewardResponse } from "../rewards.types";
@@ -33,14 +34,14 @@ export function RewardsTable({
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left">
-          <thead className="bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/50 dark:text-slate-400">
+          <thead className="bg-slate-50/70 text-[11px] uppercase tracking-[0.14em] text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
             <tr>
-              <th className="px-5 py-3 font-medium">Name</th>
-              <th className="px-5 py-3 font-medium">Description</th>
-              <th className="px-5 py-3 font-medium">Required Points</th>
-              <th className="px-5 py-3 font-medium">Stock</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Actions</th>
+              <th className="px-5 py-3 font-semibold">Name</th>
+              <th className="px-5 py-3 font-semibold">Description</th>
+              <th className="px-5 py-3 font-semibold">Required Points</th>
+              <th className="px-5 py-3 font-semibold">Stock</th>
+              <th className="px-5 py-3 font-semibold">Status</th>
+              <th className="px-5 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200/80 text-sm dark:divide-slate-800/80">
@@ -48,7 +49,7 @@ export function RewardsTable({
               const isActionLoading = actionRewardId === reward.id;
 
               return (
-                <tr key={reward.id}>
+                <tr key={reward.id} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
                   <td className="px-5 py-3.5 font-medium text-slate-800 dark:text-slate-100">
                     {reward.name}
                   </td>
@@ -68,25 +69,21 @@ export function RewardsTable({
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => onEdit(reward)}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                       >
                         Edit
-                      </button>
-                      <button
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        isLoading={isActionLoading}
                         onClick={() => onToggleStatus(reward)}
-                        disabled={isActionLoading}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                       >
-                        {isActionLoading
-                          ? "Saving..."
-                          : reward.active
-                            ? "Deactivate"
-                            : "Activate"}
-                      </button>
+                        {reward.active ? "Deactivate" : "Activate"}
+                      </Button>
                     </div>
                   </td>
                 </tr>

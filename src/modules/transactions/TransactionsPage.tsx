@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { InlineAlert } from "../../components/ui/InlineAlert";
+import { toast } from "sonner";
+import { Button } from "../../components/ui/Button";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
 import { extractErrorMessage } from "../../lib/error-utils";
 import { useProgram } from "../program-config/ProgramContext";
@@ -19,11 +20,6 @@ import type {
   PurchaseTransactionResponse,
   TransactionFormSubmitPayload,
 } from "./transactions.types";
-
-type FeedbackState = {
-  kind: "success" | "error";
-  message: string;
-} | null;
 
 function resolveAwardedPoints(
   transaction: PurchaseTransactionResponse,
@@ -79,13 +75,9 @@ function TransactionsErrorState({
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {message}
       </p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-5 inline-flex rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-      >
+      <Button variant="secondary" className="mt-5" onClick={onRetry}>
         Retry
-      </button>
+      </Button>
     </SurfaceCard>
   );
 }
@@ -147,8 +139,6 @@ export function TransactionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSavingModal, setIsSavingModal] = useState(false);
 
@@ -189,14 +179,10 @@ export function TransactionsPage() {
 
   const handleOpenCreateModal = () => {
     if (!currentProgramId) {
-      setFeedback({
-        kind: "error",
-        message: "Select a program before creating transactions.",
-      });
+      toast.error("Select a program before creating transactions.");
       return;
     }
 
-    setFeedback(null);
     setIsModalOpen(true);
   };
 
@@ -212,10 +198,7 @@ export function TransactionsPage() {
     payload: TransactionFormSubmitPayload,
   ) => {
     if (!currentProgramId) {
-      setFeedback({
-        kind: "error",
-        message: "Select a program before saving transactions.",
-      });
+      toast.error("Select a program before saving transactions.");
       return;
     }
 
@@ -233,15 +216,11 @@ export function TransactionsPage() {
       await loadProgramData(currentProgramId);
 
       setIsModalOpen(false);
-      setFeedback({
-        kind: "success",
-        message: `Transaction created successfully. Awarded points: ${resolveAwardedPoints(createdTransaction)}.`,
-      });
+      toast.success(
+        `Transaction created. Awarded points: ${resolveAwardedPoints(createdTransaction)}.`,
+      );
     } catch (error) {
-      setFeedback({
-        kind: "error",
-        message: `Could not create transaction. ${extractErrorMessage(error)}`,
-      });
+      toast.error(`Could not create transaction. ${extractErrorMessage(error)}`);
     } finally {
       setIsSavingModal(false);
     }
@@ -297,10 +276,6 @@ export function TransactionsPage() {
         </p>
       </header>
 
-      {feedback ? (
-        <InlineAlert tone={feedback.kind} message={feedback.message} />
-      ) : null}
-
       <SurfaceCard className="flex items-center justify-between p-4 sm:p-5">
         <div>
           <h2 className="text-sm font-semibold tracking-wide text-slate-800 dark:text-slate-100">
@@ -311,13 +286,9 @@ export function TransactionsPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenCreateModal}
-          className="rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-        >
+        <Button variant="primary" onClick={handleOpenCreateModal}>
           New Transaction
-        </button>
+        </Button>
       </SurfaceCard>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">

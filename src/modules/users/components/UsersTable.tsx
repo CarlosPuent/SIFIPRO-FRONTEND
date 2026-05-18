@@ -1,3 +1,4 @@
+import { Button } from "../../../components/ui/Button";
 import { SurfaceCard } from "../../../components/ui/SurfaceCard";
 import type { UserResponse } from "../users.types";
 import { UserRoleBadge } from "./UserRoleBadge";
@@ -42,13 +43,13 @@ export function UsersTable({
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left">
-          <thead className="bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/50 dark:text-slate-400">
+          <thead className="bg-slate-50/70 text-[11px] uppercase tracking-[0.14em] text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
             <tr>
-              <th className="px-5 py-3 font-medium">Name</th>
-              <th className="px-5 py-3 font-medium">Email</th>
-              <th className="px-5 py-3 font-medium">Role</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Actions</th>
+              <th className="px-5 py-3 font-semibold">Name</th>
+              <th className="px-5 py-3 font-semibold">Email</th>
+              <th className="px-5 py-3 font-semibold">Role</th>
+              <th className="px-5 py-3 font-semibold">Status</th>
+              <th className="px-5 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
 
@@ -58,7 +59,7 @@ export function UsersTable({
               const isPasswordActionLoading = passwordActionUserId === user.id;
 
               return (
-                <tr key={user.id}>
+                <tr key={user.id} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
                   <td className="px-5 py-3.5 font-medium text-slate-800 dark:text-slate-100">
                     {getFullName(user)}
                   </td>
@@ -73,37 +74,29 @@ export function UsersTable({
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => onEdit(user.id)}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                       >
                         Edit
-                      </button>
-
-                      <button
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        isLoading={isStatusActionLoading}
                         onClick={() => onToggleStatus(user)}
-                        disabled={isStatusActionLoading}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                       >
-                        {isStatusActionLoading
-                          ? "Saving..."
-                          : user.active
-                            ? "Deactivate"
-                            : "Activate"}
-                      </button>
-
-                      <button
-                        type="button"
+                        {user.active ? "Deactivate" : "Activate"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        isLoading={isPasswordActionLoading}
                         onClick={() => onChangePassword(user)}
-                        disabled={isPasswordActionLoading}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                       >
-                        {isPasswordActionLoading
-                          ? "Saving..."
-                          : "Change Password"}
-                      </button>
+                        Change Password
+                      </Button>
                     </div>
                   </td>
                 </tr>

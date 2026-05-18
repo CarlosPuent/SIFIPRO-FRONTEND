@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
+import { Toaster } from "sonner";
 import { AppHeader } from "./AppHeader";
 import { Sidebar } from "./Sidebar";
 import {
@@ -23,6 +24,15 @@ export function AppLayout() {
 
   return (
     <div className="relative min-h-screen text-slate-900 transition-colors dark:text-slate-100">
+      <Toaster
+        position="bottom-right"
+        richColors
+        theme={theme}
+        closeButton
+        toastOptions={{
+          style: { fontFamily: "Manrope, sans-serif", fontSize: "13px" },
+        }}
+      />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,#ffffff_0%,#f2f5f9_44%,#edf1f6_100%)] dark:bg-[radial-gradient(circle_at_top,#121720_0%,#0d1118_48%,#0a0e14_100%)]" />
       <div className="relative flex min-h-screen flex-col md:flex-row">
         <Sidebar />

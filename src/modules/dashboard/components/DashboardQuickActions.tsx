@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { AuthRole } from "../../../auth/auth.types";
 import { SurfaceCard } from "../../../components/ui/SurfaceCard";
@@ -96,7 +97,7 @@ export function DashboardQuickActions({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {actions.map((action) => (
           <SurfaceCard key={action.label} className="group relative overflow-hidden p-0">
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/70 to-transparent dark:via-slate-700/80" />
+            <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-slate-300/70 to-transparent dark:via-slate-700/80" />
             <Link
               to={action.path}
               className="block rounded-2xl px-4 py-3.5 transition hover:bg-slate-50/80 dark:hover:bg-slate-900/75"
@@ -110,8 +111,8 @@ export function DashboardQuickActions({
                     {action.description}
                   </p>
                 </div>
-                <span className="mt-0.5 inline-flex h-7 min-w-7 items-center justify-center rounded-full border border-slate-200 bg-white/80 px-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600 transition group-hover:border-slate-300 group-hover:text-slate-800 dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-300 dark:group-hover:border-slate-600 dark:group-hover:text-slate-100">
-                  Go
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-slate-200/80 bg-white/80 text-slate-400 transition group-hover:border-indigo-200 group-hover:bg-indigo-50 group-hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-500 dark:group-hover:border-indigo-800 dark:group-hover:bg-indigo-950/60 dark:group-hover:text-indigo-400">
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </span>
               </div>
             </Link>

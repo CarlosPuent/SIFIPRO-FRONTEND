@@ -1,16 +1,26 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  ArrowLeftRight,
+  Gift,
+  ShoppingBag,
+  UserCheck,
+  Users,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { appNavigation } from "../../app/router/routes";
 import { useAuth } from "../../auth/useAuth";
+import { Button } from "../../components/ui/Button";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
 import { extractErrorMessage } from "../../lib/error-utils";
 import { formatNumber } from "../../lib/formatters";
 import { useProgram } from "../program-config/ProgramContext";
+import { ActivityChart } from "./components/ActivityChart";
 import { DashboardQuickActions } from "./components/DashboardQuickActions";
 import { LowStockRewardsTable } from "./components/LowStockRewardsTable";
 import { MetricCard } from "./components/MetricCard";
 import { RecentRedemptionsTable } from "./components/RecentRedemptionsTable";
 import { RecentTransactionsTable } from "./components/RecentTransactionsTable";
 import { fetchOperationalDashboardData } from "./dashboard.service";
+import { CustomSelect } from "../../components/ui/form/CustomSelect";
 import type {
   DashboardOperationalData,
   DashboardScopeSummary,
@@ -19,24 +29,39 @@ import type {
 function buildMetricItems(summary: DashboardScopeSummary) {
   return [
     {
-      label: "Customers in Tenant",
+      label: "Customers",
       value: formatNumber(summary.tenantCustomers),
+      icon: Users,
+      iconColor: "text-slate-600 dark:text-slate-300",
+      iconBg: "bg-slate-100 dark:bg-slate-800",
     },
     {
-      label: "Active Customers in Tenant",
+      label: "Active Customers",
       value: formatNumber(summary.tenantActiveCustomers),
+      icon: UserCheck,
+      iconColor: "text-emerald-600 dark:text-emerald-400",
+      iconBg: "bg-emerald-50 dark:bg-emerald-950/50",
     },
     {
-      label: "Rewards in Program",
+      label: "Rewards",
       value: formatNumber(summary.programRewards),
+      icon: Gift,
+      iconColor: "text-violet-600 dark:text-violet-400",
+      iconBg: "bg-violet-50 dark:bg-violet-950/50",
     },
     {
-      label: "Transactions in Program",
+      label: "Transactions",
       value: formatNumber(summary.programTransactions),
+      icon: ArrowLeftRight,
+      iconColor: "text-indigo-600 dark:text-indigo-400",
+      iconBg: "bg-indigo-50 dark:bg-indigo-950/50",
     },
     {
-      label: "Redemptions in Program",
+      label: "Redemptions",
       value: formatNumber(summary.programRedemptions),
+      icon: ShoppingBag,
+      iconColor: "text-amber-600 dark:text-amber-400",
+      iconBg: "bg-amber-50 dark:bg-amber-950/50",
     },
   ];
 }
@@ -89,13 +114,9 @@ function DashboardErrorState({ message, onRetry }: DashboardErrorStateProps) {
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {message}
       </p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-5 inline-flex rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-      >
+      <Button variant="secondary" className="mt-5" onClick={onRetry}>
         Retry
-      </button>
+      </Button>
     </SurfaceCard>
   );
 }
@@ -130,7 +151,13 @@ function DashboardProgramSelectionState({
 
 export function DashboardPage() {
   const { user } = useAuth();
-  const { currentProgram, isLoadingPrograms, programsError } = useProgram();
+  const {
+    currentProgram,
+    programs,
+    setCurrentProgramById,
+    isLoadingPrograms,
+    programsError,
+  } = useProgram();
   const currentProgramId = currentProgram?.id ?? null;
   const [dashboardData, setDashboardData] =
     useState<DashboardOperationalData | null>(null);
@@ -145,31 +172,73 @@ export function DashboardPage() {
   const roleTitle = user?.role === "ADMIN" ? "ADMIN" : "STAFF";
   const tenantName = user?.tenant.name ?? "Tenant unavailable";
 
-  const loadDashboard = useCallback(async () => {
-    if (!currentProgramId) {
-      setDashboardData(null);
-      setErrorMessage(null);
-      setIsLoading(false);
-      return;
-    }
+  useEffect(() => {
+    let isMounted = true;
 
-    setIsLoading(true);
-    setErrorMessage(null);
+    const loadDashboardData = async () => {
+      if (!currentProgramId) {
+        // Al usar Promise.resolve().then() hacemos que la actualización de estado sea asíncrona,
+        // solucionando el error del Linter de "sync setState in effect"
+        Promise.resolve().then(() => {
+          if (isMounted) {
+            setDashboardData(null);
+            setErrorMessage(null);
+            setIsLoading(false);
+          }
+        });
+        return;
+      }
 
-    try {
-      const data = await fetchOperationalDashboardData(currentProgramId);
-      setDashboardData(data);
-    } catch (error) {
-      const message = extractErrorMessage(error, "Unexpected dashboard error.");
-      setErrorMessage(message);
-    } finally {
-      setIsLoading(false);
-    }
+      Promise.resolve().then(() => {
+        if (isMounted) {
+          setIsLoading(true);
+          setErrorMessage(null);
+        }
+      });
+
+      try {
+        const data = await fetchOperationalDashboardData(currentProgramId);
+        if (isMounted) {
+          setDashboardData(data);
+        }
+      } catch (error) {
+        if (isMounted) {
+          const message = extractErrorMessage(
+            error,
+            "Unexpected dashboard error.",
+          );
+          setErrorMessage(message);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadDashboardData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [currentProgramId]);
 
-  useEffect(() => {
-    void loadDashboard();
-  }, [loadDashboard]);
+  // Función de retry manual en caso de error
+  const handleRetry = () => {
+    setIsLoading(true);
+    setErrorMessage(null);
+    // Forzamos un re-trigger del estado o simplemente volvemos a hacer fetch
+    if (currentProgramId) {
+      fetchOperationalDashboardData(currentProgramId)
+        .then((data) => setDashboardData(data))
+        .catch((err) =>
+          setErrorMessage(
+            extractErrorMessage(err, "Unexpected dashboard error."),
+          ),
+        )
+        .finally(() => setIsLoading(false));
+    }
+  };
 
   const metricItems = useMemo(() => {
     if (!dashboardData) {
@@ -197,8 +266,9 @@ export function DashboardPage() {
 
   return (
     <section className="space-y-6">
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)] xl:items-start">
-        <header className="space-y-2 rounded-2xl border border-slate-200/80 bg-white/75 px-5 py-4 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/65">
+      {/* Layout mejorado: Flexbox asegura que no se encimen los elementos */}
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-stretch">
+        <header className="flex-[1.4] flex flex-col justify-center space-y-2 rounded-2xl border border-slate-200/80 bg-white/75 px-6 py-5 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/65">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
             Dashboard
           </p>
@@ -210,39 +280,64 @@ export function DashboardPage() {
           </p>
         </header>
 
-        <SurfaceCard className="p-4 sm:p-5">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+        <SurfaceCard className="flex-[0.9] w-full min-w-0 p-5 xl:min-w-80">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
                 Tenant
               </p>
-              <p className="mt-1.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <p className="mt-1.5 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                 {tenantName}
               </p>
             </div>
+
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                Current Program
+                Program
               </p>
-              <p className="mt-1.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                {currentProgram?.programName ?? "Select a program"}
-              </p>
+              <div className="mt-1.5">
+                <CustomSelect
+                  value={
+                    currentProgramId !== null ? String(currentProgramId) : ""
+                  }
+                  disabled={isLoadingPrograms || programs.length === 0}
+                  onChange={(val) => {
+                    const id = Number(val);
+                    if (Number.isFinite(id) && id > 0)
+                      setCurrentProgramById(id);
+                  }}
+                  className="w-full"
+                  placeholder={
+                    isLoadingPrograms
+                      ? "Loading programs…"
+                      : "No programs available"
+                  }
+                  options={
+                    isLoadingPrograms || programs.length === 0
+                      ? []
+                      : programs.map((p) => ({
+                          value: String(p.id),
+                          label: p.programName,
+                        }))
+                  }
+                />
+              </div>
+              {programsError ? (
+                <p className="mt-1 text-[11px] text-rose-500 dark:text-rose-400">
+                  {programsError}
+                </p>
+              ) : null}
             </div>
+
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
-                Operational Role
+                Role
               </p>
-              <p className="mt-1.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
+              <p className="mt-1.5 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">
                 {roleTitle}
               </p>
             </div>
           </div>
-          <div className="mt-3 h-px bg-slate-200/80 dark:bg-slate-800/80" />
-          <p className="mt-3 text-xs leading-5 text-slate-500 dark:text-slate-400">
-            Customer totals remain tenant-scoped. Rewards, transactions,
-            redemptions, and low-stock inventory are scoped to the selected
-            program.
-          </p>
         </SurfaceCard>
       </div>
 
@@ -256,13 +351,13 @@ export function DashboardPage() {
       ) : null}
 
       {!isLoading && currentProgram && errorMessage ? (
-        <DashboardErrorState message={errorMessage} onRetry={loadDashboard} />
+        <DashboardErrorState message={errorMessage} onRetry={handleRetry} />
       ) : null}
 
       {!isLoading && currentProgram && !errorMessage && !dashboardData ? (
         <DashboardErrorState
           message="Dashboard data is unavailable."
-          onRetry={loadDashboard}
+          onRetry={handleRetry}
         />
       ) : null}
 
@@ -283,10 +378,15 @@ export function DashboardPage() {
                   key={metric.label}
                   label={metric.label}
                   value={metric.value}
+                  icon={metric.icon}
+                  iconColor={metric.iconColor}
+                  iconBg={metric.iconBg}
                 />
               ))}
             </div>
           </section>
+
+          <ActivityChart transactions={dashboardData.recentTransactions} />
 
           <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <RecentTransactionsTable

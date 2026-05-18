@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { Button } from "../../../components/ui/Button";
 import { SurfaceCard } from "../../../components/ui/SurfaceCard";
 import { fallbackText, formatPoints } from "../../../lib/formatters";
 import type { CustomerResponse } from "../customers.types";
@@ -38,14 +40,14 @@ export function CustomersTable({
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left">
-          <thead className="bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/50 dark:text-slate-400">
+          <thead className="bg-slate-50/70 text-[11px] uppercase tracking-[0.14em] text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
             <tr>
-              <th className="px-5 py-3 font-medium">Name</th>
-              <th className="px-5 py-3 font-medium">Email</th>
-              <th className="px-5 py-3 font-medium">Phone</th>
-              <th className="px-5 py-3 font-medium">Points Balance</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Actions</th>
+              <th className="px-5 py-3 font-semibold">Name</th>
+              <th className="px-5 py-3 font-semibold">Email</th>
+              <th className="px-5 py-3 font-semibold">Phone</th>
+              <th className="px-5 py-3 font-semibold">Points Balance</th>
+              <th className="px-5 py-3 font-semibold">Status</th>
+              <th className="px-5 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200/80 text-sm dark:divide-slate-800/80">
@@ -53,9 +55,14 @@ export function CustomersTable({
               const isActionLoading = actionCustomerId === customer.id;
 
               return (
-                <tr key={customer.id}>
-                  <td className="px-5 py-3.5 font-medium text-slate-800 dark:text-slate-100">
-                    {getFullName(customer)}
+                <tr key={customer.id} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                  <td className="px-5 py-3.5">
+                    <Link
+                      to={`/customers/${customer.id}`}
+                      className="font-medium text-slate-800 transition-colors hover:text-indigo-600 dark:text-slate-100 dark:hover:text-indigo-400"
+                    >
+                      {getFullName(customer)}
+                    </Link>
                   </td>
                   <td className="px-5 py-3.5 text-slate-600 dark:text-slate-300">
                     {customer.email}
@@ -71,25 +78,27 @@ export function CustomersTable({
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <button
-                        type="button"
+                      <Link
+                        to={`/customers/${customer.id}`}
+                        className="inline-flex items-center justify-center rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-xs font-medium text-indigo-600 transition hover:bg-indigo-50 hover:text-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-950/50 dark:hover:text-indigo-300"
+                      >
+                        Profile
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => onEdit(customer.id)}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                       >
                         Edit
-                      </button>
-                      <button
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        isLoading={isActionLoading}
                         onClick={() => onToggleStatus(customer)}
-                        disabled={isActionLoading}
-                        className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                       >
-                        {isActionLoading
-                          ? "Saving..."
-                          : customer.active
-                            ? "Deactivate"
-                            : "Activate"}
-                      </button>
+                        {customer.active ? "Deactivate" : "Activate"}
+                      </Button>
                     </div>
                   </td>
                 </tr>

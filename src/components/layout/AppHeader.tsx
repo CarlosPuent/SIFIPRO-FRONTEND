@@ -1,9 +1,10 @@
+import { LogOut } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { appNavigation } from "../../app/router/routes";
 import { isAdmin, isStaff } from "../../auth/role-utils";
 import { useAuth } from "../../auth/useAuth";
-import { useProgram } from "../../modules/program-config/ProgramContext";
 import type { Theme } from "../../lib/theme";
+import { Button } from "../ui/Button";
 import { ThemeToggle } from "../ui/ThemeToggle";
 
 type AppHeaderProps = {
@@ -13,14 +14,6 @@ type AppHeaderProps = {
 
 export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
   const { user, logout } = useAuth();
-  const {
-    programs,
-    currentProgram,
-    currentProgramId,
-    setCurrentProgramById,
-    isLoadingPrograms,
-    programsError,
-  } = useProgram();
   const location = useLocation();
   const activeItem = appNavigation.find(
     (item) =>
@@ -34,126 +27,49 @@ export function AppHeader({ theme, onToggleTheme }: AppHeaderProps) {
 
   const roleLabel = isAdmin(user) ? "ADMIN" : isStaff(user) ? "STAFF" : "-";
   const tenantName = user?.tenant.name ?? "-";
-  const hasPrograms = programs.length > 0;
-  const selectorValue =
-    currentProgramId !== null && hasPrograms ? String(currentProgramId) : "";
-
-  const programStatusLabel = isLoadingPrograms
-    ? "Loading programs..."
-    : hasPrograms
-      ? currentProgram
-        ? `Current Program: ${currentProgram.programName}`
-        : "Select a program"
-      : "No programs available";
-
-  const handleProgramChange = (value: string) => {
-    const nextProgramId = Number(value);
-
-    if (Number.isInteger(nextProgramId) && nextProgramId > 0) {
-      setCurrentProgramById(nextProgramId);
-    }
-  };
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/75 px-4 py-3 backdrop-blur-xl transition-colors dark:border-slate-800/80 dark:bg-slate-950/65 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">
-              SIFIPRO Admin
+    <header className="sticky top-0 z-20 border-b border-slate-200/60 bg-white/80 px-5 py-3.5 backdrop-blur-xl transition-all duration-300 dark:border-white/[0.05] dark:bg-slate-950/75 sm:px-8">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-400">
+            SIFIPRO Admin
+          </p>
+          <h1 className="text-[1.125rem] font-semibold tracking-tight text-slate-800 dark:text-slate-100 sm:text-[1.25rem]">
+            {activeItem?.label ?? "SIFIPRO"}
+          </h1>
+          {activeItem?.description ? (
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              {activeItem.description}
             </p>
-            <h1 className="mt-1 text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-xl">
-              {activeItem?.label ?? "SIFIPRO"}
-            </h1>
-            {activeItem?.description ? (
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 sm:text-sm">
-                {activeItem.description}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="hidden items-center gap-3 rounded-xl border border-slate-200/80 bg-white/80 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/70 sm:flex">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                {userDisplayName.charAt(0).toUpperCase()}
-              </span>
-              <div className="text-right">
-                <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
-                  {userDisplayName}
-                </p>
-                <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {roleLabel}
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {tenantName}
-                </p>
-              </div>
-            </div>
-
-            <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-
-            <button
-              type="button"
-              onClick={logout}
-              className="inline-flex items-center rounded-xl border border-slate-300 bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-            >
-              Logout
-            </button>
-          </div>
+          ) : null}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_220px] sm:items-center">
-          <div className="rounded-xl border border-slate-200/80 bg-white/80 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/70 sm:hidden">
-            <p className="text-xs font-medium text-slate-700 dark:text-slate-200">
-              {userDisplayName}
-            </p>
-            <p className="text-[11px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {roleLabel}
-            </p>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              {tenantName}
-            </p>
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="hidden items-center gap-3 rounded-full border border-slate-200/70 bg-white/90 py-1.5 pl-1.5 pr-4 shadow-sm dark:border-white/[0.05] dark:bg-slate-900/60 md:flex">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-50 font-semibold text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400">
+              {userDisplayName.charAt(0).toUpperCase()}
+            </span>
+            <div className="text-right leading-none">
+              <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                {userDisplayName}
+              </p>
+              <p className="mt-1 text-[10px] font-medium tracking-wide text-slate-500 dark:text-slate-400">
+                {roleLabel} · {tenantName}
+              </p>
+            </div>
           </div>
 
-          <div className="rounded-xl border border-slate-200/80 bg-white/80 px-3 py-2 dark:border-slate-700 dark:bg-slate-900/70 sm:justify-self-end">
-            <label
-              htmlFor="current-program-selector"
-              className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400"
-            >
-              Program
-            </label>
-            <select
-              id="current-program-selector"
-              value={selectorValue}
-              disabled={isLoadingPrograms || !hasPrograms}
-              onChange={(event) => {
-                handleProgramChange(event.target.value);
-              }}
-              className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-800 outline-none transition focus:border-slate-400 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-500"
-            >
-              {isLoadingPrograms ? (
-                <option value="">Loading programs...</option>
-              ) : null}
-              {!isLoadingPrograms && !hasPrograms ? (
-                <option value="">No programs available</option>
-              ) : null}
-              {!isLoadingPrograms
-                ? programs.map((program) => (
-                    <option key={program.id} value={String(program.id)}>
-                      {program.programName}
-                    </option>
-                  ))
-                : null}
-            </select>
-            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-              {programStatusLabel}
-            </p>
-            {programsError ? (
-              <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">
-                {programsError}
-              </p>
-            ) : null}
-          </div>
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+
+          <Button
+            variant="secondary"
+            size="sm"
+            leftIcon={<LogOut className="h-3.5 w-3.5" />}
+            onClick={logout}
+          >
+            Logout
+          </Button>
         </div>
       </div>
     </header>

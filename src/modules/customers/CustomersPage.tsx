@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { InlineAlert } from "../../components/ui/InlineAlert";
+import { toast } from "sonner";
+import { Button } from "../../components/ui/Button";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
 import { extractErrorMessage } from "../../lib/error-utils";
 import { CustomerFormModal } from "./components/CustomerFormModal";
@@ -17,11 +18,6 @@ import type {
   CustomerResponse,
   UpdateCustomerRequest,
 } from "./customers.types";
-
-type FeedbackState = {
-  kind: "success" | "error";
-  message: string;
-} | null;
 
 type ModalMode = "create" | "edit";
 
@@ -53,13 +49,9 @@ function CustomersErrorState({ message, onRetry }: CustomersErrorStateProps) {
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {message}
       </p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-5 inline-flex rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-      >
+      <Button variant="secondary" className="mt-5" onClick={onRetry}>
         Retry
-      </button>
+      </Button>
     </SurfaceCard>
   );
 }
@@ -81,8 +73,6 @@ export function CustomersPage() {
   const [customers, setCustomers] = useState<CustomerResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
@@ -115,7 +105,6 @@ export function CustomersPage() {
   }, [loadCustomers]);
 
   const handleOpenCreate = () => {
-    setFeedback(null);
     setModalMode("create");
     setSelectedCustomerId(null);
     setSelectedCustomer(null);
@@ -124,7 +113,6 @@ export function CustomersPage() {
   };
 
   const handleOpenEdit = async (customerId: number) => {
-    setFeedback(null);
     setModalMode("edit");
     setSelectedCustomerId(customerId);
     setSelectedCustomer(null);
@@ -136,10 +124,7 @@ export function CustomersPage() {
       setSelectedCustomer(customer);
     } catch (error) {
       setModalOpen(false);
-      setFeedback({
-        kind: "error",
-        message: `Could not load customer details. ${extractErrorMessage(error)}`,
-      });
+      toast.error(`Could not load customer details. ${extractErrorMessage(error)}`);
     } finally {
       setIsLoadingModalData(false);
     }
@@ -161,10 +146,7 @@ export function CustomersPage() {
     try {
       if (modalMode === "create") {
         await createCustomer(payload as CreateCustomerRequest);
-        setFeedback({
-          kind: "success",
-          message: "Customer created successfully.",
-        });
+        toast.success("Customer created successfully.");
       } else {
         if (!selectedCustomerId) {
           throw new Error("Customer identifier is missing.");
@@ -174,19 +156,13 @@ export function CustomersPage() {
           selectedCustomerId,
           payload as UpdateCustomerRequest,
         );
-        setFeedback({
-          kind: "success",
-          message: "Customer updated successfully.",
-        });
+        toast.success("Customer updated successfully.");
       }
 
       setModalOpen(false);
       await loadCustomers();
     } catch (error) {
-      setFeedback({
-        kind: "error",
-        message: `Could not save customer. ${extractErrorMessage(error)}`,
-      });
+      toast.error(`Could not save customer. ${extractErrorMessage(error)}`);
     } finally {
       setIsSavingModal(false);
     }
@@ -194,29 +170,19 @@ export function CustomersPage() {
 
   const handleToggleCustomerStatus = async (customer: CustomerResponse) => {
     setActionCustomerId(customer.id);
-    setFeedback(null);
 
     try {
       if (customer.active) {
         await deactivateCustomer(customer.id);
-        setFeedback({
-          kind: "success",
-          message: "Customer deactivated successfully.",
-        });
+        toast.success("Customer deactivated successfully.");
       } else {
         await activateCustomer(customer.id);
-        setFeedback({
-          kind: "success",
-          message: "Customer activated successfully.",
-        });
+        toast.success("Customer activated successfully.");
       }
 
       await loadCustomers();
     } catch (error) {
-      setFeedback({
-        kind: "error",
-        message: `Could not update customer status. ${extractErrorMessage(error)}`,
-      });
+      toast.error(`Could not update customer status. ${extractErrorMessage(error)}`);
     } finally {
       setActionCustomerId(null);
     }
@@ -242,10 +208,6 @@ export function CustomersPage() {
         </p>
       </header>
 
-      {feedback ? (
-        <InlineAlert tone={feedback.kind} message={feedback.message} />
-      ) : null}
-
       <SurfaceCard className="flex items-center justify-between p-4 sm:p-5">
         <div>
           <h2 className="text-sm font-semibold tracking-wide text-slate-800 dark:text-slate-100">
@@ -257,21 +219,9 @@ export function CustomersPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenCreate}
-          className="rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-        >
+        <Button variant="primary" onClick={handleOpenCreate}>
           New Customer
-        </button>
-      </SurfaceCard>
-
-      <SurfaceCard className="p-4 sm:p-5">
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          Points Balance is shown as returned by the customer endpoint for the
-          tenant customer record. It is not switched by the current program in
-          this module.
-        </p>
+        </Button>
       </SurfaceCard>
 
       {customers.length === 0 ? (

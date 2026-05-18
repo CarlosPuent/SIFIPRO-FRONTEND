@@ -7,6 +7,7 @@ export interface RewardResponse {
   requiredPoints: number | string;
   stock: number;
   active: boolean;
+  imageUrl?: string | null;
   createdAt: string;
   updatedAt: string;
 }

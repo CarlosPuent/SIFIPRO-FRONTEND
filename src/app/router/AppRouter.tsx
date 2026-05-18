@@ -10,6 +10,7 @@ import { ProtectedRoute } from "../../auth/ProtectedRoute";
 import { LoginPage } from "../../modules/auth/LoginPage";
 import { DashboardPage } from "../../modules/dashboard/DashboardPage";
 import { CustomersPage } from "../../modules/customers/CustomersPage";
+import { CustomerProfilePage } from "../../modules/customers/CustomerProfilePage";
 import { RewardsPage } from "../../modules/rewards/RewardsPage";
 import { TransactionsPage } from "../../modules/transactions/TransactionsPage";
 import { RedemptionsPage } from "../../modules/redemptions/RedemptionsPage";
@@ -49,6 +50,10 @@ const router = createBrowserRouter([
       {
         path: "customers",
         element: <CustomersPage />,
+      },
+      {
+        path: "customers/:id",
+        element: <CustomerProfilePage />,
       },
       {
         path: "rewards",

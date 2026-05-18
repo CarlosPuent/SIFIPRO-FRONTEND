@@ -1,3 +1,4 @@
+import { Button } from "../../../components/ui/Button";
 import { SurfaceCard } from "../../../components/ui/SurfaceCard";
 import {
   formatDateTime,
@@ -33,15 +34,15 @@ export function ProgramsTable({
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left">
-          <thead className="bg-slate-50/80 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/50 dark:text-slate-400">
+          <thead className="bg-slate-50/70 text-[11px] uppercase tracking-[0.14em] text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
             <tr>
-              <th className="px-5 py-3 font-medium">Program</th>
-              <th className="px-5 py-3 font-medium">Points/$</th>
-              <th className="px-5 py-3 font-medium">Min Purchase</th>
-              <th className="px-5 py-3 font-medium">Status</th>
-              <th className="px-5 py-3 font-medium">Created</th>
-              <th className="px-5 py-3 font-medium">Updated</th>
-              <th className="px-5 py-3 font-medium">Actions</th>
+              <th className="px-5 py-3 font-semibold">Program</th>
+              <th className="px-5 py-3 font-semibold">Points/$</th>
+              <th className="px-5 py-3 font-semibold">Min Purchase</th>
+              <th className="px-5 py-3 font-semibold">Status</th>
+              <th className="px-5 py-3 font-semibold">Created</th>
+              <th className="px-5 py-3 font-semibold">Updated</th>
+              <th className="px-5 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
 
@@ -61,7 +62,7 @@ export function ProgramsTable({
                   statusActionProgramId === program.id;
 
                 return (
-                  <tr key={program.id}>
+                  <tr key={program.id} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
                     <td className="px-5 py-3.5 font-medium text-slate-800 dark:text-slate-100">
                       {program.programName}
                     </td>
@@ -82,26 +83,21 @@ export function ProgramsTable({
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => onEdit(program)}
-                          className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                         >
                           Edit
-                        </button>
-
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          isLoading={isStatusActionLoading}
                           onClick={() => onToggleStatus(program)}
-                          disabled={isStatusActionLoading}
-                          className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
                         >
-                          {isStatusActionLoading
-                            ? "Saving..."
-                            : program.active
-                              ? "Deactivate"
-                              : "Activate"}
-                        </button>
+                          {program.active ? "Deactivate" : "Activate"}
+                        </Button>
                       </div>
                     </td>
                   </tr>

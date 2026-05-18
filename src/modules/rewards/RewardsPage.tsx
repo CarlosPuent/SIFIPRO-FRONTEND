@@ -1,10 +1,12 @@
+import { Gift, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { InlineAlert } from "../../components/ui/InlineAlert";
+import { toast } from "sonner";
+import { Button } from "../../components/ui/Button";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
 import { extractErrorMessage } from "../../lib/error-utils";
 import { useProgram } from "../program-config/ProgramContext";
 import { RewardFormModal } from "./components/RewardFormModal";
-import { RewardsTable } from "./components/RewardsTable";
+import { RewardsGrid } from "./components/RewardsGrid";
 import {
   activateReward,
   createReward,
@@ -18,11 +20,6 @@ import type {
   RewardResponse,
 } from "./rewards.types";
 
-type FeedbackState = {
-  kind: "success" | "error";
-  message: string;
-} | null;
-
 type ModalMode = "create" | "edit";
 
 function RewardsLoadingState() {
@@ -34,7 +31,27 @@ function RewardsLoadingState() {
       </div>
 
       <div className="h-16 animate-pulse rounded-2xl border border-slate-200/80 bg-white/80 dark:border-slate-800/80 dark:bg-slate-900/70" />
-      <div className="h-72 animate-pulse rounded-2xl border border-slate-200/80 bg-white/80 dark:border-slate-800/80 dark:bg-slate-900/70" />
+
+      {/* Card skeleton grid */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="animate-pulse overflow-hidden rounded-2xl border border-slate-200/80 bg-white/80 dark:border-slate-800/80 dark:bg-slate-900/70"
+          >
+            <div className="aspect-3/2 bg-slate-200 dark:bg-slate-800" />
+            <div className="p-4 space-y-2.5">
+              <div className="h-3 w-1/3 rounded bg-slate-200 dark:bg-slate-800" />
+              <div className="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-800" />
+              <div className="h-3 w-full rounded bg-slate-200 dark:bg-slate-800" />
+              <div className="h-3 w-2/3 rounded bg-slate-200 dark:bg-slate-800" />
+            </div>
+            <div className="border-t border-slate-100 dark:border-slate-800/80 px-4 py-3">
+              <div className="h-6 w-28 rounded bg-slate-200 dark:bg-slate-800" />
+            </div>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
@@ -81,27 +98,36 @@ function RewardsErrorState({ message, onRetry }: RewardsErrorStateProps) {
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {message}
       </p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-5 inline-flex rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-      >
+      <Button variant="secondary" className="mt-5" onClick={onRetry}>
         Retry
-      </button>
+      </Button>
     </SurfaceCard>
   );
 }
 
-function RewardsEmptyState() {
+function RewardsEmptyState({ onAdd }: { onAdd: () => void }) {
   return (
-    <SurfaceCard className="p-8">
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300/80 bg-white/60 px-6 py-16 text-center dark:border-slate-700/80 dark:bg-slate-900/40">
+      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 dark:bg-indigo-950/50">
+        <Gift className="h-7 w-7 text-indigo-500 dark:text-indigo-400" strokeWidth={1.5} />
+      </div>
+      <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-slate-100">
         No rewards yet
-      </h2>
-      <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-        Create your first reward to start enabling redemptions.
+      </h3>
+      <p className="mt-2 max-w-sm text-sm text-slate-500 dark:text-slate-400">
+        Create your first reward to start offering redemption options for this
+        program.
       </p>
-    </SurfaceCard>
+      <Button
+        variant="primary"
+        size="sm"
+        leftIcon={<Plus className="h-3.5 w-3.5" />}
+        onClick={onAdd}
+        className="mt-5"
+      >
+        Add First Reward
+      </Button>
+    </div>
   );
 }
 
@@ -112,8 +138,6 @@ export function RewardsPage() {
   const [rewards, setRewards] = useState<RewardResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
@@ -152,21 +176,16 @@ export function RewardsPage() {
 
   const handleOpenCreate = () => {
     if (!currentProgramId) {
-      setFeedback({
-        kind: "error",
-        message: "Select a program before creating rewards.",
-      });
+      toast.error("Select a program before creating rewards.");
       return;
     }
 
-    setFeedback(null);
     setModalMode("create");
     setSelectedReward(null);
     setModalOpen(true);
   };
 
   const handleOpenEdit = (reward: RewardResponse) => {
-    setFeedback(null);
     setModalMode("edit");
     setSelectedReward(reward);
     setModalOpen(true);
@@ -182,10 +201,7 @@ export function RewardsPage() {
 
   const handleSubmitReward = async (payload: RewardFormSubmitPayload) => {
     if (!currentProgramId) {
-      setFeedback({
-        kind: "error",
-        message: "Select a program before saving rewards.",
-      });
+      toast.error("Select a program before saving rewards.");
       return;
     }
 
@@ -199,29 +215,20 @@ export function RewardsPage() {
 
       if (modalMode === "create") {
         await createReward(payloadWithProgram);
-        setFeedback({
-          kind: "success",
-          message: "Reward created successfully.",
-        });
+        toast.success("Reward created successfully.");
       } else {
         if (!selectedReward) {
           throw new Error("Reward identifier is missing.");
         }
 
         await updateReward(selectedReward.id, payloadWithProgram);
-        setFeedback({
-          kind: "success",
-          message: "Reward updated successfully.",
-        });
+        toast.success("Reward updated successfully.");
       }
 
       setModalOpen(false);
       await loadRewards(currentProgramId);
     } catch (error) {
-      setFeedback({
-        kind: "error",
-        message: `Could not save reward. ${extractErrorMessage(error)}`,
-      });
+      toast.error(`Could not save reward. ${extractErrorMessage(error)}`);
     } finally {
       setIsSavingModal(false);
     }
@@ -233,29 +240,21 @@ export function RewardsPage() {
     }
 
     setActionRewardId(reward.id);
-    setFeedback(null);
 
     try {
       if (reward.active) {
         await deactivateReward(reward.id);
-        setFeedback({
-          kind: "success",
-          message: "Reward deactivated successfully.",
-        });
+        toast.success("Reward deactivated successfully.");
       } else {
         await activateReward(reward.id);
-        setFeedback({
-          kind: "success",
-          message: "Reward activated successfully.",
-        });
+        toast.success("Reward activated successfully.");
       }
 
       await loadRewards(currentProgramId);
     } catch (error) {
-      setFeedback({
-        kind: "error",
-        message: `Could not update reward status. ${extractErrorMessage(error)}`,
-      });
+      toast.error(
+        `Could not update reward status. ${extractErrorMessage(error)}`,
+      );
     } finally {
       setActionRewardId(null);
     }
@@ -297,6 +296,10 @@ export function RewardsPage() {
     );
   }
 
+  const activeCount = rewards.filter((r) => r.active).length;
+  const lowStockCount = rewards.filter((r) => r.active && r.stock > 0 && r.stock <= 5).length;
+  const outOfStockCount = rewards.filter((r) => r.active && r.stock === 0).length;
+
   return (
     <section className="space-y-6">
       <header className="space-y-2">
@@ -309,33 +312,42 @@ export function RewardsPage() {
         </p>
       </header>
 
-      {feedback ? (
-        <InlineAlert tone={feedback.kind} message={feedback.message} />
-      ) : null}
-
-      <SurfaceCard className="flex items-center justify-between p-4 sm:p-5">
-        <div>
-          <h2 className="text-sm font-semibold tracking-wide text-slate-800 dark:text-slate-100">
-            Reward Management
-          </h2>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            Program: {currentProgram.programName} (ID: {currentProgram.id})
-          </p>
+      {/* Toolbar */}
+      <SurfaceCard className="flex flex-wrap items-center justify-between gap-4 p-4 sm:p-5">
+        <div className="flex flex-wrap items-center gap-4">
+          <div>
+            <h2 className="text-sm font-semibold tracking-wide text-slate-800 dark:text-slate-100">
+              {currentProgram.programName}
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+              {rewards.length} reward{rewards.length !== 1 ? "s" : ""} · {activeCount} active
+              {lowStockCount > 0 ? (
+                <span className="ml-1.5 text-amber-600 dark:text-amber-400">
+                  · {lowStockCount} low stock
+                </span>
+              ) : null}
+              {outOfStockCount > 0 ? (
+                <span className="ml-1.5 text-rose-600 dark:text-rose-400">
+                  · {outOfStockCount} out of stock
+                </span>
+              ) : null}
+            </p>
+          </div>
         </div>
 
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          leftIcon={<Plus className="h-3.5 w-3.5" />}
           onClick={handleOpenCreate}
-          className="rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
         >
           New Reward
-        </button>
+        </Button>
       </SurfaceCard>
 
       {rewards.length === 0 ? (
-        <RewardsEmptyState />
+        <RewardsEmptyState onAdd={handleOpenCreate} />
       ) : (
-        <RewardsTable
+        <RewardsGrid
           rewards={rewards}
           actionRewardId={actionRewardId}
           onEdit={handleOpenEdit}

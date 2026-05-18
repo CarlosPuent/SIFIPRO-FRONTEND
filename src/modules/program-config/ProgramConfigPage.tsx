@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
-import { InlineAlert } from "../../components/ui/InlineAlert";
+import { toast } from "sonner";
+import { Button } from "../../components/ui/Button";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
 import { extractErrorMessage } from "../../lib/error-utils";
 import { useProgram } from "./ProgramContext";
@@ -18,11 +19,6 @@ import type {
 } from "./program-config.types";
 import { ProgramFormModal } from "./components/ProgramFormModal";
 import { ProgramsTable } from "./components/ProgramsTable";
-
-type FeedbackState = {
-  kind: "success" | "error";
-  message: string;
-} | null;
 
 type ProgramFormMode = "create" | "edit";
 
@@ -57,13 +53,9 @@ function ProgramConfigErrorState({
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {message}
       </p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-5 inline-flex rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-      >
+      <Button variant="secondary" className="mt-5" onClick={onRetry}>
         Retry
-      </button>
+      </Button>
     </SurfaceCard>
   );
 }
@@ -101,7 +93,6 @@ export function ProgramConfigPage() {
   const [statusActionProgramId, setStatusActionProgramId] = useState<
     number | null
   >(null);
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const loadPrograms = useCallback(async (showLoader = true) => {
     if (showLoader) {
@@ -112,10 +103,6 @@ export function ProgramConfigPage() {
     try {
       const response = await getProgramConfigs();
       setPrograms(response);
-
-      if (!showLoader) {
-        setLoadError(null);
-      }
     } catch (error) {
       const message = extractErrorMessage(
         error,
@@ -125,10 +112,7 @@ export function ProgramConfigPage() {
       if (showLoader) {
         setLoadError(message);
       } else {
-        setFeedback({
-          kind: "error",
-          message: `Changes were saved but list refresh failed. ${message}`,
-        });
+        toast.error(`Changes were saved but list refresh failed. ${message}`);
       }
     } finally {
       if (showLoader) {
@@ -171,7 +155,6 @@ export function ProgramConfigPage() {
     payload: CreateProgramConfigRequest | UpdateProgramConfigRequest,
   ) => {
     setIsSaving(true);
-    setFeedback(null);
 
     try {
       if (formMode === "create") {
@@ -192,18 +175,13 @@ export function ProgramConfigPage() {
 
       setIsFormOpen(false);
       setEditingProgram(null);
-      setFeedback({
-        kind: "success",
-        message:
-          formMode === "create"
-            ? "Program created successfully."
-            : "Program updated successfully.",
-      });
+      toast.success(
+        formMode === "create"
+          ? "Program created successfully."
+          : "Program updated successfully.",
+      );
     } catch (error) {
-      setFeedback({
-        kind: "error",
-        message: `Could not save program. ${extractErrorMessage(error)}`,
-      });
+      toast.error(`Could not save program. ${extractErrorMessage(error)}`);
     } finally {
       setIsSaving(false);
     }
@@ -211,7 +189,6 @@ export function ProgramConfigPage() {
 
   const handleToggleStatus = async (program: ProgramConfigResponse) => {
     setStatusActionProgramId(program.id);
-    setFeedback(null);
 
     try {
       if (program.active) {
@@ -223,15 +200,11 @@ export function ProgramConfigPage() {
       await loadPrograms(false);
       await reloadPrograms();
 
-      setFeedback({
-        kind: "success",
-        message: `${program.programName} was ${program.active ? "deactivated" : "activated"} successfully.`,
-      });
+      toast.success(
+        `${program.programName} was ${program.active ? "deactivated" : "activated"} successfully.`,
+      );
     } catch (error) {
-      setFeedback({
-        kind: "error",
-        message: getToggleStatusErrorMessage(error, program.active),
-      });
+      toast.error(getToggleStatusErrorMessage(error, program.active));
     } finally {
       setStatusActionProgramId(null);
     }
@@ -263,28 +236,19 @@ export function ProgramConfigPage() {
           edit, and toggle active status from one place.
         </p>
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <button
-            type="button"
-            onClick={openCreateForm}
-            className="rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-          >
+          <Button variant="primary" onClick={openCreateForm}>
             New Program
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => {
               void loadPrograms();
             }}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600 dark:hover:bg-slate-800"
           >
             Refresh
-          </button>
+          </Button>
         </div>
       </header>
-
-      {feedback ? (
-        <InlineAlert tone={feedback.kind} message={feedback.message} />
-      ) : null}
 
       <SurfaceCard className="p-4 sm:p-5">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

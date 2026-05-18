@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { InlineAlert } from "../../components/ui/InlineAlert";
+import { toast } from "sonner";
+import { Button } from "../../components/ui/Button";
 import { SurfaceCard } from "../../components/ui/SurfaceCard";
 import { extractErrorMessage } from "../../lib/error-utils";
 import { useProgram } from "../program-config/ProgramContext";
@@ -20,11 +21,6 @@ import type {
   RedemptionResponse,
   RewardResponse,
 } from "./redemptions.types";
-
-type FeedbackState = {
-  kind: "success" | "error";
-  message: string;
-} | null;
 
 type InitialDataResult = {
   redemptionsData: RedemptionResponse[];
@@ -107,13 +103,9 @@ function RedemptionsErrorState({
       <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
         {message}
       </p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="mt-5 inline-flex rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-      >
+      <Button variant="secondary" className="mt-5" onClick={onRetry}>
         Retry
-      </button>
+      </Button>
     </SurfaceCard>
   );
 }
@@ -144,8 +136,6 @@ export function RedemptionsPage() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-
-  const [feedback, setFeedback] = useState<FeedbackState>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSavingModal, setIsSavingModal] = useState(false);
@@ -368,14 +358,10 @@ export function RedemptionsPage() {
 
   const handleOpenCreateModal = () => {
     if (!currentProgramId) {
-      setFeedback({
-        kind: "error",
-        message: "Select a program before creating redemptions.",
-      });
+      toast.error("Select a program before creating redemptions.");
       return;
     }
 
-    setFeedback(null);
     setIsModalOpen(true);
   };
 
@@ -407,10 +393,7 @@ export function RedemptionsPage() {
 
   const handleSubmitRedemption = async (payload: CreateRedemptionRequest) => {
     if (!currentProgramId) {
-      setFeedback({
-        kind: "error",
-        message: "Select a program before saving redemptions.",
-      });
+      toast.error("Select a program before saving redemptions.");
       return;
     }
 
@@ -453,15 +436,9 @@ export function RedemptionsPage() {
       }
 
       setIsModalOpen(false);
-      setFeedback({
-        kind: "success",
-        message: "Redemption created successfully.",
-      });
+      toast.success("Redemption created successfully.");
     } catch (error) {
-      setFeedback({
-        kind: "error",
-        message: `Could not create redemption. ${extractErrorMessage(error)}`,
-      });
+      toast.error(`Could not create redemption. ${extractErrorMessage(error)}`);
     } finally {
       setIsSavingModal(false);
     }
@@ -510,10 +487,6 @@ export function RedemptionsPage() {
         </p>
       </header>
 
-      {feedback ? (
-        <InlineAlert tone={feedback.kind} message={feedback.message} />
-      ) : null}
-
       <SurfaceCard className="flex items-center justify-between p-4 sm:p-5">
         <div>
           <h2 className="text-sm font-semibold tracking-wide text-slate-800 dark:text-slate-100">
@@ -524,13 +497,9 @@ export function RedemptionsPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleOpenCreateModal}
-          className="rounded-lg border border-slate-300 bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:border-slate-400 hover:bg-slate-800 dark:border-slate-600 dark:bg-slate-100 dark:text-slate-900 dark:hover:border-slate-500 dark:hover:bg-white"
-        >
+        <Button variant="primary" onClick={handleOpenCreateModal}>
           New Redemption
-        </button>
+        </Button>
       </SurfaceCard>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
